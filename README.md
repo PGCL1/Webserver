@@ -1,7 +1,7 @@
 literatures:
-    *[RFC HTTP Server](https://datatracker.ietf.org/doc/html/rfc2616#autoid-1)
-    *[HTTP Semantics](https://httpwg.org/specs/rfc9110.html)
-    *[Mozilla - What is a webser](https://developer.mozilla.org/en-US/docs/Learn/Common_questions/Web_mechanics/What_is_a_web_server)
+    * [RFC HTTP Server](https://datatracker.ietf.org/doc/html/rfc2616#autoid-1)
+    * [HTTP Semantics](https://httpwg.org/specs/rfc9110.html)
+    * [Mozilla - What is a webser](https://developer.mozilla.org/en-US/docs/Learn/Common_questions/Web_mechanics/What_is_a_web_server)
 
 
 allowed functions:
