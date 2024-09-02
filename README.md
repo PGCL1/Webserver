@@ -1,7 +1,24 @@
+HTTP provides a uniform interface for interacting with a resource -- regardless of its type, nature, or implementation -- by sending messages that manipulate or transfer representations.
+
+Each message is either a request or a response.
+A client constructs request messages that communicate its intentions and routes those messages toward an identified origin server.
+A server listens for requests, parses each message received, interprets the message semantics in relation to the identified target resource, and responds to that request with one or more response messages.
+The client examines received responses to see if its intentions were carried out, determining what to do next based on the status codes and content received.
+
+HTTP messages sent from web clients to web servers are called request messages.
+Messages from servers to clients are called response messages. There are no other
+kinds of HTTP messages. The formats of HTTP request and response messages are
+very similar.
+
 literatures:
+Online -- 
 * [RFC HTTP Server](https://datatracker.ietf.org/doc/html/rfc2616#autoid-1)
 * [HTTP Semantics](https://httpwg.org/specs/rfc9110.html)
 * [Mozilla - What is a webser](https://developer.mozilla.org/en-US/docs/Learn/Common_questions/Web_mechanics/What_is_a_web_server)
+
+Books --
+HTTP The Definitive Guide
+HTTP Pocket Reference
 
 
 allowed functions:
@@ -147,3 +164,7 @@ libraries needed:
     #include <arpa/inet.h>
     #include <poll.h>
     #include <sys/epoll.h>
+
+
+
+
