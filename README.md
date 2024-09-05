@@ -10,8 +10,16 @@ Messages from servers to clients are called response messages. There are no othe
 kinds of HTTP messages. The formats of HTTP request and response messages are
 very similar.
 
+A socket is a way to speak to other programs using standard Unix fds. There are two main types of sockets (not true, there's a bunch more, like Raw Sockets):
+    - Stream Sockets (SOCK_STREAM) are reliable two-way connected communication streams, the data that is inputted in one end, comes out the other end error-free and in the same order. They use a protocol called TCP(Transmission Control Protocol) to maintain a high level of data transmission.
+    - Datagram Sockets (SOCK_DGRAM) don't need to maintain an open connection, they just send out packets to a specific IP, no connection needed. They are used in cases where speed is paramount and loosing a few packets doesn't change much the experience. They make use of UDP(User Datagram Protocol) protcol
+
+Example:
+If you’re sending chat messages, TCP is great; if you’re sending 40 positional updates per second of the players in the world, maybe it doesn’t matter so much if one or two get dropped, and UDP is a good choice
+
 literatures:
 Online -- 
+* [Guide to Network Programming](https://beej.us/guide/bgnet/html/#audience)
 * [RFC HTTP Server](https://datatracker.ietf.org/doc/html/rfc2616#autoid-1)
 * [HTTP Semantics](https://httpwg.org/specs/rfc9110.html)
 * [Mozilla - What is a webser](https://developer.mozilla.org/en-US/docs/Learn/Common_questions/Web_mechanics/What_is_a_web_server)
@@ -142,6 +150,12 @@ allowed functions:
         set appropriately.
 
     send
+
+        ssize_t send(int sockfd, const void* buf, size_t len, int flags);
+
+        The send call may be used only when the socket is in a connected state (so that the intented recipient is known).
+        The only different between send and write is the presence of flags. With a zero flags, argument, send is equivalent to write.
+        The argument sockfd is the file descriptor of the send socket
     recv
     chdir
     bind

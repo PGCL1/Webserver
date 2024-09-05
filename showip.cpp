@@ -6,19 +6,19 @@
 /*   By: glacroix <PGCL>                            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/04 15:36:28 by glacroix          #+#    #+#             */
-/*   Updated: 2024/09/04 16:27:47 by glacroix         ###   ########.fr       */
+/*   Updated: 2024/09/04 17:38:31 by glacroix         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <sys/types.h>
+#include <arpa/inet.h>
 #include <iostream>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/socket.h>
-#include <netdb.h>
-#include <arpa/inet.h>
+#include <unistd.h>
 
 int main(int argc, char **argv)
 {
