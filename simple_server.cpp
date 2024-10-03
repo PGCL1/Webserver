@@ -6,7 +6,7 @@
 /*   By: glacroix <PGCL>                            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/30 16:41:24 by glacroix          #+#    #+#             */
-/*   Updated: 2024/10/02 17:53:58 by glacroix         ###   ########.fr       */
+/*   Updated: 2024/10/03 15:47:29 by glacroix         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,12 +117,15 @@ int main() {
         ss2 >> path;
         ss2 >> path;
 
+        std::cout << "`" << path << "` | size = " << path.size()<< std::endl;
+        if (path.size() == 1) 
+            path = "/index.html";
+
         std::string new_path =  "." + path;
         std::cout << "new_path = " << new_path << std::endl;
 
 
         std::string html = readFileContent(new_path);
-        //"<html></html>\n<head></head><link rel=\"stylesheet\" href=\"style.css\">\n<body><h1>Hello</h1>\n<script src=\"index.js\"></script></body>";
 
         std::stringstream convert;
         convert << html.size();
@@ -134,7 +137,7 @@ int main() {
 
     // Close the connection
     close(client_fd);
-    close(server_fd);
+  //  close(server_fd);
 
     std::cout << "Response sent and connection closed." << std::endl;
 
