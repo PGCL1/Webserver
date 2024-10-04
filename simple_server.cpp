@@ -6,7 +6,7 @@
 /*   By: glacroix <PGCL>                            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/30 16:41:24 by glacroix          #+#    #+#             */
-/*   Updated: 2024/10/03 18:18:44 by glacroix         ###   ########.fr       */
+/*   Updated: 2024/10/04 16:21:15 by glacroix         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,23 +25,13 @@
 #include <netinet/in.h>
 #include <sys/select.h>     // For select()
 #include <arpa/inet.h>
+#include <vector>
 #include <set>
 
 #define PORT 3333
 #define BACKLOG 10
 
 #if 0
-struct ClientInfo {
-    std::string ip;
-    int port;
-
-    // Overload the < operator to allow insertion into a std::set
-    bool operator<(const ClientInfo& other) const {
-        return std::pair<std::string, int>(ip, port) < std::pair<std::string, int>(other.ip, other.port);
-    }
-};
-
-
 
 std::string getContentType(const std::string &path)
 {
@@ -107,29 +97,23 @@ int main()
     // Set of connected clients
     std::set<ClientInfo> clients;
 
-    // Variables for select()
     fd_set readfds;
     int max_sd, client_fd, activity;
     struct sockaddr_in client_addr;
     socklen_t client_len = sizeof(client_addr);
 
-    // Array to keep track of client sockets
     int client_sockets[FD_SETSIZE]; // FD_SETSIZE is the maximum number of file descriptors select() can handle
 
-    // Initialize all client sockets to -1 (empty)
     for (int i = 0; i < FD_SETSIZE; i++) {
         client_sockets[i] = -1;
     }
 
     while (true) {
-        // Clear and set the read file descriptor set
         FD_ZERO(&readfds);
 
-        // Add the server socket to the set
         FD_SET(server_fd, &readfds);
         max_sd = server_fd;
 
-        // Add active client sockets to the set
         for (int i = 0; i < FD_SETSIZE; i++) {
             if (client_sockets[i] > 0) {
                 FD_SET(client_sockets[i], &readfds);
@@ -139,7 +123,6 @@ int main()
             }
         }
 
-        // Wait indefinitely for an activity on one of the sockets
         activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
         if (activity < 0) {
             perror("Error in select()");
@@ -166,10 +149,8 @@ int main()
                 std::cout << "New client added: IP = " << client_ip << ", Port = " << client_port << std::endl;
                 clients.insert(new_client); // Add to the set of known clients
 
-                // Set the new client socket to non-blocking mode
                 setNonBlocking(client_fd);
 
-                // Add the new client to the array of client sockets
                 for (int i = 0; i < FD_SETSIZE; i++) {
                     if (client_sockets[i] == -1) {
                         client_sockets[i] = client_fd;
@@ -177,7 +158,6 @@ int main()
                     }
                 }
             } else {
-                // Close the connection if the client already exists (optional)
                 std::cout << "Client already connected, ignoring connection from IP = " << client_ip << ", Port = " << client_port << std::endl;
                 close(client_fd);
             }
@@ -207,7 +187,6 @@ int main()
         }
     }
 
-    // Close the server socket
     close(server_fd);
     return 0;
 }
@@ -224,6 +203,41 @@ std::string readFileContent(std::string path)
     }
     file.close();
     return ss.str();
+}
+
+void respondClient(int client_fd, std::vector<char>& dynamic_buffer)
+{
+    dynamic_buffer.push_back('\0'); 
+    std::cout << "Received request:\n" << dynamic_buffer.data() << std::endl;
+    
+    // Prepare an HTTP response
+    std::stringstream ss;
+    ss << dynamic_buffer.data();
+
+    std::string line;
+    std::getline(ss, line);
+    std::stringstream ss2(line);
+
+    std::string path;
+    ss2 >> path;
+    ss2 >> path;
+
+    std::cout << "`" << path << "` | size = " << path.size()<< std::endl;
+    if (path.size() == 1) 
+        path = "/index.html";
+
+    std::string new_path =  "." + path;
+    std::cout << "new_path = " << new_path << std::endl;
+
+
+    std::string html = readFileContent(new_path);
+
+    std::stringstream convert;
+    convert << html.size();
+    std::string response = "HTTP/1.1 200 OK\r\nContent-Length: " + convert.str() + "\r\n\r\n" + html;
+
+    // Send the response to the client
+    send(client_fd, response.c_str(), response.size(), 0);
 }
 
 int main() {
@@ -260,66 +274,54 @@ int main() {
 
     std::cout << "Server is listening on port 3333..." << std::endl;
 
-    // Accept an incoming connection
-    struct sockaddr_in client_addr;
-    socklen_t client_len = sizeof(client_addr);
-    int client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
-    if (client_fd < 0) {
-        perror("Error accepting connection");
-        close(server_fd);
-        exit(EXIT_FAILURE);
-    }
-
-    // Buffer to hold incoming request data
-    for (size_t i = 0; i < 3; i += 1)
+    std::vector<char> dynamic_buffer;
+    int client_fd;
+    const size_t buffer_increment = 1024;
+    ssize_t bytes_received;
+    while (true) 
     {
-        char buffer[1024];
-        int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-        if (bytes_received < 0) {
-            perror("Error receiving data");
-            close(client_fd);
+        struct sockaddr_in client_addr;
+        socklen_t client_len = sizeof(client_addr);
+        client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
+        if (client_fd < 0) 
+        {
+            perror("Error accepting connection");
             close(server_fd);
             exit(EXIT_FAILURE);
         }
+        std::cout << "Client " << client_fd << " connected" << std::endl;
+        char temp_buffer[buffer_increment];  
+        bytes_received = recv(client_fd, temp_buffer, sizeof(temp_buffer), 0);
 
-        // Null-terminate the received data and print the request
-        buffer[bytes_received] = '\0';
-        std::cout << "Received request:\n" << buffer << std::endl;
-
-        // Prepare an HTTP response
-
-        std::stringstream ss;
-        ss << buffer;
-
-        std::string line;
-        std::getline(ss, line);
-        std::stringstream ss2(line);
-
-        std::string path;
-        ss2 >> path;
-        ss2 >> path;
-
-        std::cout << "`" << path << "` | size = " << path.size()<< std::endl;
-        if (path.size() == 1) 
-            path = "/index.html";
-
-        std::string new_path =  "." + path;
-        std::cout << "new_path = " << new_path << std::endl;
-
-
-        std::string html = readFileContent(new_path);
-
-        std::stringstream convert;
-        convert << html.size();
-        std::string response = "HTTP/1.1 200 OK\r\nContent-Length: " + convert.str() + "\r\n\r\n" + html;
-
-        // Send the response to the client
-        send(client_fd, response.c_str(), response.size(), 0);
+        if (bytes_received < 0) 
+        {
+            if (errno == EWOULDBLOCK || errno == EAGAIN)
+                break;
+            else
+            {
+                perror("Error receiving data");
+                close(client_fd);
+                close(server_fd);
+                exit(EXIT_FAILURE);
+            }
+        }
+        /*
+        else if (bytes_received == 0)
+        {
+            std::cout << "Client " << client_fd << " disconnected." << std::endl;
+            break;
+        }*/
+        else 
+        {
+            // Append the received data to the dynamic buffer
+            dynamic_buffer.insert(dynamic_buffer.end(), temp_buffer, temp_buffer + bytes_received);
+            respondClient(client_fd, dynamic_buffer);
+        }
     }
 
-    // Close the connection
-    close(client_fd);
-  //  close(server_fd);
+
+    // Close remaining fds;
+    close(server_fd);
 
     std::cout << "Response sent and connection closed." << std::endl;
 
